@@ -2,8 +2,8 @@ import requests
 import time
 from collections import defaultdict
 
-ZABBIX_API_URL = "http://192.168.3.142:8080/api_jsonrpc.php"
-ZABBIX_API_TOKEN = "02d38acc411a8d3b990174bcad852004ee08705cf72c0f911b5b6bbe5c9e529a"
+ZABBIX_API_URL = "http://x.x.x.x/api_jsonrpc.php"
+ZABBIX_API_TOKEN = "xxxxxxx"
 
 headers = {
     "Content-Type": "application/json-rpc"

@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+
 import requests
 import time
 from collections import defaultdict
 
-ZABBIX_API_URL = "http://x.x.x.x/api_jsonrpc.php"
-ZABBIX_API_TOKEN = "xxxxxxx"
+ZABBIX_API_URL = "http://x.x.x.x:8080/api_jsonrpc.php"
+ZABBIX_API_TOKEN = ""
 
 headers = {
     "Content-Type": "application/json-rpc"
@@ -22,9 +24,9 @@ def api_request(method, params):
 
     try:
         response = requests.post(ZABBIX_API_URL, json=payload, headers=headers_with_auth, timeout=10)
-        print(f"\n🚀 Sent {method} request with payload:\n{payload}")
-        print(f"📡 HTTP Status Code: {response.status_code}")
-        print(f"Response text: {response.text}")
+#        print(f"\n🚀 Sent {method} request with payload:\n{payload}")
+#        print(f"📡 HTTP Status Code: {response.status_code}")
+#        print(f"Response text: {response.text}")
         return response.json()
     except Exception as e:
         print(f"❌ Error calling Zabbix API method {method}: {e}")
@@ -50,14 +52,14 @@ def detectar_massiva(min_alertas=5, intervalo_minutos=10):
         print("❌ Error or empty response fetching events:", eventos_resp.get("error") if eventos_resp else "No response")
         return
     eventos = eventos_resp.get("result", [])
-    print(f"📊 Active events found: {len(eventos)}")
+#    print(f"📊 Active events found: {len(eventos)}")
 
     if not eventos:
         print("⚠️ No active events found.")
         return
 
     hostids = list({host["hostid"] for evento in eventos for host in evento.get("hosts", [])})
-    print(f"🧩 Unique hosts from events: {len(hostids)}")
+#    print(f"🧩 Unique hosts from events: {len(hostids)}")
 
     if not hostids:
         print("⚠️ No hosts associated with events.")
@@ -70,13 +72,13 @@ def detectar_massiva(min_alertas=5, intervalo_minutos=10):
         "hostids": hostids
     }
 
-    print("🔍 Fetching hostgroups and tags for involved hosts...")
+#    print("🔍 Fetching hostgroups and tags for involved hosts...")
     hosts_resp = api_request("host.get", params_hosts)
     if not hosts_resp or "error" in hosts_resp:
         print("❌ Error fetching hosts and groups:", hosts_resp.get("error") if hosts_resp else "No response")
         return
     hosts = hosts_resp.get("result", [])
-    print(f"📊 Hosts and metadata returned: {len(hosts)}")
+#    print(f"📊 Hosts and metadata returned: {len(hosts)}")
 
     hostid_to_context = {}
 
@@ -91,7 +93,7 @@ def detectar_massiva(min_alertas=5, intervalo_minutos=10):
             groups = [cliente_tag]
 
         if not groups:
-            print(f"⚠️ Host {hostname} (ID {hostid}) não retornou grupos ou tag CLIENTE! Verifique permissões.")
+#            print(f" Host {hostname} (ID {hostid}) não retornou grupos ou tag CLIENTE! Verifique permissões.")
             continue
 
         hostid_to_context[hostid] = {
@@ -116,20 +118,21 @@ def detectar_massiva(min_alertas=5, intervalo_minutos=10):
                 group_event_count[grupo] += 1
                 group_hosts_afetados[grupo].add(f"{hostname} (ID: {hostid})")
 
-    print("\n🔎 Analyzing events by group...")
+    print("\n Analyzing events by group...")
     massiva_detectada = False
     for grupo, count in group_event_count.items():
         if count >= min_alertas:
             massiva_detectada = True
             hosts = group_hosts_afetados[grupo]
-            print(f"\n🚨 MASSIVE ALERT DETECTED IN GROUP (or CLIENTE tag): {grupo}")
+            print(f"\n MASSIVE ALERT DETECTED IN GROUP: {grupo}")
+ #           print(f"\n🚨 MASSIVE ALERT DETECTED IN GROUP (or CLIENTE tag): {grupo}")
             print(f"Total alerts: {count}")
             print(f"Affected hosts ({len(hosts)}):")
             for h in hosts:
                 print(f" - {h}")
 
     if not massiva_detectada:
-        print("✅ No massive alerts detected.")
+        print("No massive alerts detected.")
 
 if __name__ == "__main__":
     detectar_massiva(min_alertas=5, intervalo_minutos=10)
